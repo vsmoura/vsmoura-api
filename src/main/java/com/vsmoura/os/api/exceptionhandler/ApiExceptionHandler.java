@@ -1,5 +1,6 @@
 package com.vsmoura.os.api.exceptionhandler;
 
+import com.vsmoura.os.domain.exception.EntidadeNaoEncontradaException;
 import com.vsmoura.os.domain.exception.NegocioException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 
 @ControllerAdvice
@@ -24,6 +25,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
+    @ExceptionHandler(EntidadeNaoEncontradaException.class)
+    public ResponseEntity<Object> handleEntidadeNaoNegocio(NegocioException ex, WebRequest request) {
+        var status = HttpStatus.NOT_FOUND;
+
+        var problema = new Problema();
+        problema.setStatus(status.value());
+        problema.setTitulo(ex.getMessage());
+        problema.setDataHora(OffsetDateTime.now());
+
+        return handleExceptionInternal(ex, problema, new HttpHeaders(), status, request);
+    }
+
     @ExceptionHandler(NegocioException.class)
     public ResponseEntity<Object> handleNegocio(NegocioException ex, WebRequest request) {
         var status = HttpStatus.BAD_REQUEST;
@@ -31,7 +44,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         var problema = new Problema();
         problema.setStatus(status.value());
         problema.setTitulo(ex.getMessage());
-        problema.setDataHora(LocalDateTime.now());
+        problema.setDataHora(OffsetDateTime.now());
 
         return handleExceptionInternal(ex, problema, new HttpHeaders(), status, request);
     }
@@ -50,7 +63,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         var problema = new Problema();
         problema.setStatus(status.value());
         problema.setTitulo("Um ou mais campos estão inválidos. Faça o preencimento correto e tente novamente");
-        problema.setDataHora(LocalDateTime.now());
+        problema.setDataHora(OffsetDateTime.now());
         problema.setCampos(campos);
 
         return super.handleExceptionInternal(ex, problema, headers, status, request);
